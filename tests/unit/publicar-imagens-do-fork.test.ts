@@ -34,7 +34,7 @@ describe("publicar imagens do fork", () => {
     expect(YML).toContain('lista="${img}:${SHA}-${ARCH}"');
     expect(YML).toContain('refs/heads/main');
     expect(YML).toContain("${img}:latest-${ARCH}");
-    expect(YML).toContain("APP_VERSION=${{ github.sha }}");
+    expect(YML).toContain("APP_VERSION=1.98.0+${{ github.sha }}");
     expect(YML).toContain("docker buildx imagetools create");
     expect(YML).toContain('"${tag}-amd64"');
     expect(YML).toContain('"${tag}-arm64"');

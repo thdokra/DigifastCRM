@@ -21,12 +21,11 @@ vi.mock("@/app/api/v1/leads/_handler", () => ({
   updateLeadHandler: (...a: unknown[]) => updateLead(...a),
 }));
 vi.mock("@/lib/legal/perfil-do-pais", async () => {
-  const real = await vi.importActual<Record<string, (...args: never[]) => unknown>>(
-    "@/lib/legal/perfil-do-pais",
-  );
+  const real = await vi.importActual("@/lib/legal/perfil-do-pais");
+  const perfilDoPais = (real as { perfilDoPais: (codigo: string) => unknown }).perfilDoPais;
   return {
-    ...real,
-    perfilDaOrganizacao: vi.fn(async () => real.perfilDoPais("BR")),
+    ...(real as object),
+    perfilDaOrganizacao: vi.fn(async () => perfilDoPais("BR")),
   };
 });
 
