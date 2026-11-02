@@ -27,7 +27,10 @@ import {
 } from "@/lib/contacts/conflito-unico";
 import { camposCpfParaGravar, hashCpf } from "@/lib/contacts/cpf";
 import type { Contact } from "@/lib/types/contacts";
-import { abrirConversaDoContatoNovo } from "@/lib/contacts/conversa-ao-criar";
+import {
+  abrirConversaDoContatoNovo,
+  type PortaDaCriacao,
+} from "@/lib/contacts/conversa-ao-criar";
 import type {
   ContactCreate,
   ContactPatch,
@@ -611,6 +614,12 @@ export async function createContactHandler(
   supabase: SB,
   ctx: HandlerCtx,
   input: ContactCreate,
+  /**
+   * Qual porta está criando. O POST da tela e a prospecção omitem e seguem
+   * `manual` (abre conversa quando há telefone). O `crm_create_contact` passa
+   * `mcp`, que grava a ficha e não abre conversa.
+   */
+  opcoes?: { porta?: PortaDaCriacao },
 ): Promise<CreateContactResult> {
   // ── O PADRÃO (#2730) — a MESMA régua do formulário, aqui no SERVIDOR ──────
   //
@@ -697,7 +706,7 @@ export async function createContactHandler(
   // falhar calada — o erro sai em `logger.warn` lá dentro, com org, contato e
   // porta.
   await abrirConversaDoContatoNovo(supabase, {
-    porta: "manual",
+    porta: opcoes?.porta ?? "manual",
     organizationId: ctx.organization_id,
     contactId: contact.id,
     phoneNumber: contact.phone_number,

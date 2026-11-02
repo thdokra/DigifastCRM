@@ -186,4 +186,20 @@ describe("createContactHandler — o contato novo abre a conversa (#3718)", () =
       detail: "service_channel_not_found",
     });
   });
+
+  it("porta mcp grava o contato e não abre conversa", async () => {
+    const banco = cliente({ sessoes: [SESSAO_QUE_DISCA, SESSAO_SOCIAL] });
+
+    const { contact, action } = await createContactHandler(
+      banco.db,
+      ctx(),
+      { name: "Ana", phone_number: TELEFONE } as never,
+      { porta: "mcp" },
+    );
+
+    expect(action).toBe("created");
+    expect(contact.id).toBe(CONTATO);
+    expect(banco.rpcs.some((r) => r.nome === "fn_service_begin")).toBe(false);
+    expect(banco.rpcs.some((r) => r.nome === "emit_event")).toBe(true);
+  });
 });

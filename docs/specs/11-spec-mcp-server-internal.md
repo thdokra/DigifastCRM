@@ -307,6 +307,48 @@ outputSchema: z.object({
 5. **Marcar o run com `status='handoff'`** (em vez de 'completed') — runtime do Spec 10 §6.2 detecta e finaliza apropriadamente
 6. Resposta `next_action` é uma string sugerindo ao agente o que dizer ao usuário ("Vou conectar você com um atendente humano agora") — agente integra na resposta final
 
+### 3.4 Cadastro sem mensagem e anotação no negócio
+
+O catálogo que o servidor registra está em `lib/mcp/tools/` (`allTools` +
+`TOOL_CATALOG`). A lista de exemplo em §4 é o recorte do MVP e não é a lista
+viva. Estas duas entram com papel mínimo `agent` e escopo `mcp:write`.
+
+#### `crm_create_contact`
+
+Cria contato **sem** abrir conversa e **sem** enviar mensagem. Reusa
+`createContactHandler` (`POST /api/v1/contacts`, o Salvar da ficha) com a
+porta `mcp` de `lib/contacts/conversa-ao-criar.ts`.
+
+```ts
+inputSchema: z.object({
+  name: z.string().min(1).max(200),          // obrigatório
+  job_title: z.string().max(120).optional(), // custom_fields.cargo
+  email: z.string().optional(),
+  phone_number: z.string().optional(),       // mesma normalização do formulário
+  company: z.string().max(200).optional(),   // custom_fields.empresa
+  tags: z.array(z.string()).optional(),
+  lead_id: z.string().uuid().optional(),     // só liga se o negócio não tiver contato
+})
+```
+
+Duplicata de telefone, e-mail ou CPF na organização: não cria outro contato e
+não altera o existente. A resposta traz `created: false`, `duplicate: true` e
+o `contact_id` já cadastrado — o mesmo conflito `409 contact_exists` da rota.
+Nesse caso `lead_id` não é ligado.
+
+#### `crm_add_lead_note`
+
+Acrescenta texto livre na linha do tempo do negócio (`crm_lead_activities`,
+`type: note`). O texto vai em `reason`, que é o que a timeline desenha.
+Devolve `note_id`. Não move etapa e não envia mensagem.
+
+```ts
+inputSchema: z.object({
+  lead_id: z.string().uuid(),
+  note: z.string().min(1).max(4000),
+})
+```
+
 ---
 
 ## 4. Tool selection (per agent)

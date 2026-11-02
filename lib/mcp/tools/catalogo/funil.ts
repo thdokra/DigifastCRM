@@ -114,4 +114,17 @@ export const TOOLS_FUNIL = declararTools([
     // entraria no agente que nasce no onboarding (pacote-reserva-vaga-da-critica).
     pacotes: ["reter"],
   },
+  {
+    name: "crm_add_lead_note",
+    category: "write",
+    rotulo: "Anotar texto no negócio",
+    explicacao:
+      "Registra um texto livre na linha do tempo do negócio, para a equipe ler depois, sem mover de etapa e sem mandar mensagem.",
+    oQueToca: "Funil de vendas",
+    risco: "atencao",
+    // Mesma conta de `crm_create_contact`: em "vender" o agente que nasce no
+    // onboarding estoura o teto da segunda jornada. A ferramenta continua na
+    // lista do servidor MCP para qualquer token com papel agent.
+    pacotes: ["reter"],
+  },
 ]);

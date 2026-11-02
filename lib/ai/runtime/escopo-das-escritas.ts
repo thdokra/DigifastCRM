@@ -72,6 +72,8 @@ export const ESCOPO_DAS_ESCRITAS: Readonly<Record<string, Readonly<Record<string
   crm_close_human_case: { case_id: "chamado" },
 
   // ---- negócio ----
+  crm_create_contact: { lead_id: "negocio" },
+  crm_add_lead_note: { lead_id: "negocio" },
   crm_create_lead: {
     contact_id: "contato",
     pipeline_id: "configuracao",

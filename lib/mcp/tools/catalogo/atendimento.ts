@@ -182,4 +182,20 @@ export const TOOLS_ATENDIMENTO = declararTools([
     // `capacidades-do-agente.spec.ts` (comentário de `TOOLS_DO_SEED`).
     pacotes: ["escalar"],
   },
+  {
+    name: "crm_create_contact",
+    category: "write",
+    rotulo: "Cadastrar cliente sem abrir conversa",
+    explicacao:
+      "Grava a ficha do cliente com nome, cargo, e-mail, telefone, empresa e etiquetas, sem abrir conversa e sem mandar mensagem.",
+    oQueToca: "Cadastro de clientes",
+    risco: "atencao",
+    // Fora de "vender" e de "atender": "vender" é o pacote com que o agente
+    // nasce, e cada capacidade a mais ali faz a segunda jornada deixar de
+    // caber no teto (pacote-reserva-vaga-da-critica). "atender" já encosta
+    // nesse teto. Quem quiser no agente de vendas liga no modo avançado; o
+    // servidor MCP externo oferece a ferramenta a qualquer token com papel
+    // agent, sem depender do pacote.
+    pacotes: ["reter"],
+  },
 ]);

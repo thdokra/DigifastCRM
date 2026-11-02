@@ -142,9 +142,10 @@ afterEach(() => {
 });
 
 describe("a regra de \"criar contato abre conversa\" mora num lugar só", () => {
-  it("ficha manual abre; planilha importada não", () => {
+  it("ficha manual abre; planilha importada e cadastro pelo servidor de ferramentas não", () => {
     expect(abreConversaAoCriar("manual")).toBe(true);
     expect(abreConversaAoCriar("importacao_csv")).toBe(false);
+    expect(abreConversaAoCriar("mcp")).toBe(false);
   });
 });
 
