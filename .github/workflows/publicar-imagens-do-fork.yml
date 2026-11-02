@@ -1,0 +1,103 @@
+# Imagens de produção deste fork, no GHCR do dono.
+#
+# A VPS (OCI, linux/amd64) não constrói: o `next build` do Dockerfile pede
+# ~4 GB de heap. Quem constrói é este workflow, nas máquinas do GitHub.
+# `docker-compose.prod.yml` já lê a referência do `.env`
+# (`APP_IMAGE`, `WORKER_IMAGE`, `SCHEDULER_IMAGE`). Trocar de imagem é
+# reescrever essas três linhas — o compose não muda.
+#
+# Arquitetura: os Dockerfiles (`node:22-alpine`, `alpine:3.20`) não fixam
+# plataforma, e o compose de produção também não. O upstream publica amd64 e
+# arm64 juntos. Aqui sai SÓ linux/amd64, que é o que a VM declarada puxa.
+# `uname -m` na VM tem de ser `x86_64`. Se for `aarch64`, estas tags não servem.
+#
+# Tags:
+#   :<sha completo>  imutável — a que a produção deve pinar (`pull_policy=missing`)
+#   :latest          só no push (ou dispatch) da branch `main` — tag móvel
+#
+# Não roda no upstream: o `if` do job exige este repositório. Lá quem publica
+# continua sendo `publish-image.yml`.
+
+name: Publicar imagens do fork (GHCR)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  publicar:
+    if: github.repository == 'thdokra/DigifastCRM'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    concurrency:
+      group: publicar-imagens-do-fork-${{ matrix.name }}-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      # Publica no GHCR do dono do repositório. Sem este escopo o push é 403.
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: deskcommcrm
+            dockerfile: Dockerfile
+          - name: deskcomm-worker
+            dockerfile: Dockerfile.worker
+          - name: deskcomm-scheduler
+            dockerfile: Dockerfile.scheduler
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Tags (SHA sempre; latest só na main)
+        id: tags
+        env:
+          NOME: ${{ matrix.name }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          img="${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${NOME}"
+          lista="${img}:${SHA}"
+          if [ "$REF" = "refs/heads/main" ]; then
+            lista="${lista}"$'\n'"${img}:latest"
+          fi
+          {
+            echo "list<<EOF"
+            printf '%s\n' "$lista"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "imagem ${img}"
+          printf '%s\n' "$lista"
+
+      - name: Build e push (linux/amd64, sem segredos)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.tags.outputs.list }}
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+          cache-from: type=gha,scope=fork-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=fork-${{ matrix.name }}

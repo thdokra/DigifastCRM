@@ -62,8 +62,12 @@ for EVENTO in pull_request push; do
  done
 done
 true`;
+  const env = { ...process.env, SCRIPT_DO_JOB: SCRIPT };
+  // A variável é do workflow do fork. Se o teste herdar `nao`, a matriz inteira
+  // passa e a asserção de "exatamente o declarado" mente.
+  delete env.DESKCOMM_PUBLICA_UPSTREAM;
   return execFileSync("bash", ["-c", programa], {
-    env: { ...process.env, SCRIPT_DO_JOB: SCRIPT },
+    env,
     encoding: "utf-8",
   })
     .split("\n")
@@ -96,5 +100,24 @@ describe("imagens-ok só aceita o pulo declarado", () => {
         "push nao success success success success success",
       ].sort(),
     );
+  });
+
+  it("no fork, publicação upstream pulada não reprova o check", () => {
+    const rc = execFileSync(
+      "bash",
+      [
+        "-c",
+        `
+        export DESKCOMM_PUBLICA_UPSTREAM=nao
+        export EVENTO=push PORTAO=success ALCANCE=sim
+        export BUILD=skipped MANIFESTO=skipped APP=skipped FUNDO=skipped
+        ( eval "$1" )
+      `,
+        "imagens-ok",
+        SCRIPT,
+      ],
+      { encoding: "utf-8" },
+    );
+    expect(rc).toContain("fork:");
   });
 });

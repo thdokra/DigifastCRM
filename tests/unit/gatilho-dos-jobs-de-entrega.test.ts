@@ -66,13 +66,15 @@ const DIR = join(process.cwd(), ".github/workflows");
 const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string }> = {
   // --- a cadeia que leva o conserto até a VPS ---------------------------------
   "release.yml::abrir-pr-de-release": {
-    condicao: "github.event_name == 'workflow_dispatch'",
+    condicao: "github.event_name == 'workflow_dispatch' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job é quem monta o PR de release a partir dos fragmentos de `.changes/`. " +
-      "Desligá-lo faz nenhuma versão ser fechada — sem erro em lugar nenhum.",
+      "Desligá-lo faz nenhuma versão ser fechada — sem erro em lugar nenhum. " +
+      "O termo do dono só é falso num fork: lá o App de release não existe e o job " +
+      "falharia em todo dispatch. No upstream o dono é melgarafael e o job segue.",
   },
   "release.yml::cortar-tag": {
-    condicao: "github.event_name == 'push'",
+    condicao: "github.event_name == 'push' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job é quem CRIA E EMPURRA a tag `vX.Y.Z`, que é o gatilho da atualização " +
       "do parque instalado inteiro. Desligá-lo faz a release parar em silêncio: nenhuma " +
@@ -91,13 +93,13 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
   // nada a mais. A condição tira só o PR; o `imagens-ok` exige `success` dele
   // em todo outro evento e aceita `skipped` só em pull_request.
   "publish-image.yml::build-and-push": {
-    condicao: "github.event_name != 'pull_request'",
+    condicao: "github.event_name != 'pull_request' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job PUBLICA as quatro imagens no GHCR — é o artefato que o self-hoster instala. " +
       "Desligá-lo faz a tag existir sem imagem por trás dela.",
   },
   "publish-image.yml::juntar-manifestos": {
-    condicao: "github.event_name != 'pull_request'",
+    condicao: "github.event_name != 'pull_request' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job junta os builds nativos AMD64 e ARM64 em cada tag que o cliente puxa. " +
       "Desligá-lo deixa as tags finais sem um manifesto multi-arquitetura utilizável.",
@@ -107,7 +109,8 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
   // `imagens-ok` aceita o `skipped` SÓ nessa combinação — medida pela matriz
   // de desfechos em tests/unit/imagens-ok-so-aceita-pulo-declarado.test.ts.
   "publish-image.yml::imagem-do-app-sobe": {
-    condicao: "needs.a-tag-veio-da-main.outputs.imagem == 'sim'",
+    condicao:
+      "needs.a-tag-veio-da-main.outputs.imagem == 'sim' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job prova que a imagem do app BOOTA, não só que ela constrói. Desligá-lo " +
       "devolve o defeito que derrubou a produção: imagem publicada que morre no " +
@@ -121,7 +124,7 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
   // versão anterior sem que nada tenha ficado vermelho.
   "publish-image.yml::promover-stable": {
     condicao:
-      "github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')",
+      "github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && github.repository_owner == 'melgarafael'",
     efeito:
       "As três condições barram um caminho medido cada uma. Sem `push`, um dispatch numa " +
       "release ANTIGA faria `stable` REGREDIR, e todo self-hoster no default do compose " +
@@ -135,7 +138,8 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
   // Desligá-lo devolve exatamente esse buraco: a imagem publica, o canal anda,
   // e nada prova que o laço do event_log chegou a carregar.
   "publish-image.yml::imagens-de-fundo-sobem": {
-    condicao: "needs.a-tag-veio-da-main.outputs.imagem == 'sim'",
+    condicao:
+      "needs.a-tag-veio-da-main.outputs.imagem == 'sim' && github.repository_owner == 'melgarafael'",
     efeito:
       "Este job prova que o worker BOOTA com o laço do event_log carregado e que o " +
       "scheduler tem o evento no crontab. Desligá-lo (`skipped`) faz a tag existir com " +
@@ -270,6 +274,14 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "condições são deliberadas e cada uma barra um caminho: sem a de fork, PR interno recebe " +
       "boas-vindas de robô; sem a de dono, o fork de cada self-hoster herda um bot que fala pela " +
       "gente no repositório dele, prometendo um prazo que ninguém lá concordou em cumprir.",
+  },
+  "publicar-imagens-do-fork.yml::publicar": {
+    condicao: "github.repository == 'thdokra/DigifastCRM'",
+    efeito:
+      "Este job publica as três imagens que a VPS do fork puxa (app, worker, scheduler), " +
+      "só linux/amd64, no GHCR do dono. Fora deste repositório ele fica `skipped` de " +
+      "propósito: no upstream quem publica é publish-image.yml, e um segundo push de " +
+      "`latest` no mesmo nome seria outra imagem.",
   },
   "relogio.yml::tick": {
     condicao: "vars.RELOGIO_LIGADO == '1' || github.event_name == 'workflow_dispatch'",

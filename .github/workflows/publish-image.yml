@@ -170,7 +170,11 @@ jobs:
   # `imagens-ok` aceita o `skipped` dele SÓ em pull_request.
   build-and-push:
     needs: [a-tag-veio-da-main]
-    if: github.event_name != 'pull_request'
+    # Dono: no fork o `repository_owner` não é `melgarafael`. Sem este termo o
+    # job publicaria em `ghcr.io/<dono-do-fork>/…` (o nome da imagem deriva do
+    # dono) e disputaria a tag `latest` com o workflow do fork. No upstream a
+    # condição continua verdadeira em todo push que não é PR.
+    if: github.event_name != 'pull_request' && github.repository_owner == 'melgarafael'
     runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     concurrency:
       group: ${{ github.workflow }}-build-and-push-${{ matrix.name }}-${{ matrix.arch }}-${{ github.event.pull_request.number || github.ref }}${{ github.event_name == 'pull_request' && github.run_attempt != '1' && format('-reentrada-{0}', github.event.pull_request.head.sha) || '' }}
@@ -300,7 +304,7 @@ jobs:
 
   juntar-manifestos:
     needs: [build-and-push]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.repository_owner == 'melgarafael'
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-juntar-manifestos-${{ github.event.pull_request.number || github.ref }}${{ github.event_name == 'pull_request' && github.run_attempt != '1' && format('-reentrada-{0}', github.event.pull_request.head.sha) || '' }}
@@ -370,7 +374,7 @@ jobs:
   # esse pulo só nessa condição.
   imagem-do-app-sobe:
     needs: [a-tag-veio-da-main]
-    if: needs.a-tag-veio-da-main.outputs.imagem == 'sim'
+    if: needs.a-tag-veio-da-main.outputs.imagem == 'sim' && github.repository_owner == 'melgarafael'
     # Executor próprio SÓ em PR de branch deste repo (EXECUTOR_PROPRIO=ligado).
     # Na `main` e em tag esta imagem vira a que o parque instala: ela se constrói
     # nas máquinas do GitHub, nunca numa máquina nossa. Guarda contra fork:
@@ -526,7 +530,7 @@ jobs:
     # velho sobre banco já migrado. Sem `tag`, um dispatch numa branch moveria o
     # canal. Sem o `v`, uma tag de teste o move (o registro já tem uma
     # `quebrada-teste`, que nenhum push na main consegue produzir).
-    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v') && github.repository_owner == 'melgarafael'
     runs-on: ubuntu-latest
     permissions:
       # O menor escopo que faz o trabalho: reapontar tag no GHCR. Sem o bloco, o
@@ -607,7 +611,7 @@ jobs:
   # esperar um nome que ninguém produz.
   imagens-de-fundo-sobem:
     needs: [a-tag-veio-da-main]
-    if: needs.a-tag-veio-da-main.outputs.imagem == 'sim'
+    if: needs.a-tag-veio-da-main.outputs.imagem == 'sim' && github.repository_owner == 'melgarafael'
     # Executor próprio SÓ em PR de branch deste repo (EXECUTOR_PROPRIO=ligado).
     # Na `main` e em tag esta imagem vira a que o parque instala: ela se constrói
     # nas máquinas do GitHub, nunca numa máquina nossa. Guarda contra fork:
@@ -929,8 +933,16 @@ jobs:
           MANIFESTO: ${{ needs.juntar-manifestos.result }}
           APP: ${{ needs.imagem-do-app-sobe.result }}
           FUNDO: ${{ needs.imagens-de-fundo-sobem.result }}
+          # `nao` só no fork: os jobs de publicação ficam `skipped` de propósito
+          # (o dono não é melgarafael) e este check não pode ler isso como falha.
+          # Ausente vale `sim`, que é a régua de sempre do upstream.
+          DESKCOMM_PUBLICA_UPSTREAM: ${{ github.repository_owner == 'melgarafael' && 'sim' || 'nao' }}
         run: |
           set -euo pipefail
+          if [ "${DESKCOMM_PUBLICA_UPSTREAM:-sim}" = "nao" ]; then
+            echo "fork: a publicação upstream não roda aqui — o workflow do fork publica as imagens dele"
+            exit 0
+          fi
           echo "evento=${EVENTO} a-tag-veio-da-main=${PORTAO} imagem=${ALCANCE:-<vazio>}"
           echo "build-and-push:         ${BUILD}"
           echo "juntar-manifestos:      ${MANIFESTO}"
