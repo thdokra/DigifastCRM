@@ -279,9 +279,16 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
     condicao: "github.repository == 'thdokra/DigifastCRM'",
     efeito:
       "Este job publica as três imagens que a VPS do fork puxa (app, worker, scheduler), " +
-      "só linux/amd64, no GHCR do dono. Fora deste repositório ele fica `skipped` de " +
-      "propósito: no upstream quem publica é publish-image.yml, e um segundo push de " +
-      "`latest` no mesmo nome seria outra imagem.",
+      "uma vez por arquitetura nativa, no GHCR do dono. Fora deste repositório ele fica " +
+      "`skipped` de propósito: no upstream quem publica é publish-image.yml, e um segundo " +
+      "push de `latest` no mesmo nome seria outra imagem.",
+  },
+  "publicar-imagens-do-fork.yml::juntar": {
+    condicao: "github.repository == 'thdokra/DigifastCRM'",
+    efeito:
+      "Este job junta o digest amd64 e o digest arm64 na tag do SHA e, na main, em " +
+      "`latest`. Sem ele a VPS ARM puxa uma tag que só tem amd64. Fora deste " +
+      "repositório fica `skipped` pela mesma razão do job que constrói.",
   },
   "relogio.yml::tick": {
     condicao: "vars.RELOGIO_LIGADO == '1' || github.event_name == 'workflow_dispatch'",
