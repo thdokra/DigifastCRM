@@ -62,7 +62,7 @@ for EVENTO in pull_request push; do
  done
 done
 true`;
-  const env = { ...process.env, SCRIPT_DO_JOB: SCRIPT };
+  const env: NodeJS.ProcessEnv = { ...process.env, SCRIPT_DO_JOB: SCRIPT };
   // A variável é do workflow do fork. Se o teste herdar `nao`, a matriz inteira
   // passa e a asserção de "exatamente o declarado" mente.
   delete env.DESKCOMM_PUBLICA_UPSTREAM;

@@ -76,6 +76,12 @@ const MOTIVO_DA_PARADA: Record<string, string> = {
   no_contact: "Esse lead entrou sem contato vinculado, então não havia para quem escrever.",
   contact_blocked: "O contato pediu para não receber mensagens (opt-out).",
   no_phone: "O contato não tem telefone cadastrado.",
+  /* #3813 — a escolha "não enviar" quando o contato tem horário marcado. O pulo
+     é decisão de quem montou a regra/fluxo, não falha: a frase diz o motivo para
+     quem lê a aba Atividade não confundir com erro. Emitido por
+     lib/agenda/escolha-no-envio.ts (MOTIVO_DO_PULO). */
+  compromisso_na_agenda:
+    "O contato tem horário marcado na agenda — esta automação foi configurada para não enviar quando isso acontece.",
   missing_config: "Falta preencher alguma configuração desta ação — abra a automação e revise.",
   fora_da_janela_de_envio:
     "Está fora da janela de envio configurada para esse número. A mensagem sai sozinha quando ela reabrir.",
@@ -106,6 +112,14 @@ const MOTIVO_DA_PARADA: Record<string, string> = {
   sem_rodizio:
     "A automação foi alterada e não tem mais o rodízio que disparou esta ação. Nada foi atribuído.",
   lead_nao_encontrado: "O lead deste evento não foi encontrado nesta organização, então ninguém foi atribuído.",
+  /* #3514 — a passagem SDR → Closer. O negócio JÁ mudou de dono nestes dois
+     casos; a frase diz o que ficou para trás, senão a ação "falhou" esconde uma
+     troca que aconteceu. Emitidos como `error` literal por
+     lib/automation/actions/assign-owner.ts. */
+  carteira_nao_passou:
+    "O negócio passou para a pessoa escolhida, mas a carteira do cliente não: ela e as conversas que iam junto continuam com o dono anterior. A ficha do contato mostra quem é o dono agora.",
+  conversas_nao_passaram:
+    "O negócio passou para a pessoa escolhida, mas as conversas abertas do cliente que estavam com outra pessoa não foram transferidas: nenhuma mudou de dono. Transfira pela conversa, se precisar.",
   missing_input:
     "A ação não recebeu o que precisava (o lead do evento ou a pessoa configurada). Abra a automação e revise.",
   no_tags: "Esta ação não tem nenhuma etiqueta escolhida. Abra a automação e escolha pelo menos uma.",
