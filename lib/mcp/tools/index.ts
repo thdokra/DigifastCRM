@@ -12,6 +12,7 @@
 import type { McpToolDefinition } from "../types";
 import { TOOL_CATALOG, VALID_TOOL_IDS } from "./catalog";
 import { crmSearchContacts, crmGetContact, crmProposeContactField } from "./contacts";
+import { crmCreateContact } from "./create-contact";
 import {
   crmListConversations,
   crmGetConversation,
@@ -30,11 +31,7 @@ import {
 import { crmGetPipelineForecast, crmListPipelines } from "./pipelines";
 import { crmSendWhatsappMessage } from "./messages";
 import { crmStartConversationAndSend } from "./start-conversation";
-import {
-  crmAssignConversation,
-  crmManageTags,
-  crmGetQueueStatus,
-} from "./governance";
+import { crmAssignConversation, crmManageTags, crmGetQueueStatus } from "./governance";
 import {
   crmListAvailableAttendants,
   crmListHumanCases,
@@ -44,6 +41,7 @@ import {
   crmResumeAiAttendance,
 } from "./escalacao";
 import { crmRequestHumanHandoff } from "./handoff";
+import { crmAddLeadNote } from "./lead-note";
 import {
   crmSearchKnowledge,
   crmListKnowledgeSources,
@@ -156,8 +154,10 @@ export const allTools: ReadonlyArray<McpToolDefinition> = [
   crmCancelAppointment,
   crmConfirmAppointment,
   crmSetAppointmentOutcome,
+  crmCreateContact,
   crmCreateLead,
   crmUpdateLead,
+  crmAddLeadNote,
   crmMoveLeadStage,
   crmRetomarLead,
   crmProposeLeadFieldsFromDocument,

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "diagram_type": "fluxo",
+  "meta": {
+    "titulo": "Cadastrar contato e anotar no negócio pelo MCP",
+    "pergunta": "Como um agente com papel agent cria uma ficha sem mandar mensagem e deixa um texto na linha do tempo do negócio?",
+    "resumo": "crm_create_contact chama createContactHandler com a porta mcp, que não abre conversa. Cargo e empresa vão para custom_fields. Duplicata de telefone, e-mail ou CPF devolve o contato que já existe. crm_add_lead_note grava crm_lead_activities type note, e a timeline lê o reason."
+  },
+  "lanes": [
+    { "id": "chamada", "label": "Quem chama" },
+    { "id": "regra", "label": "Regra que já existia" },
+    { "id": "dados", "label": "O que fica gravado" },
+    { "id": "tela", "label": "Onde a equipe vê" }
+  ],
+  "mainPath": ["token", "criar", "handler", "ficha", "lista"],
+  "nodes": [
+    {
+      "id": "token",
+      "lane": "chamada",
+      "col": 1,
+      "type": "service",
+      "label": "Token dsk_ papel agent",
+      "sublabel": "POST /api/mcp · escopo mcp:write"
+    },
+    {
+      "id": "criar",
+      "lane": "chamada",
+      "col": 2,
+      "type": "tool",
+      "label": "crm_create_contact",
+      "sublabel": "nome, cargo, e-mail, telefone, empresa, etiquetas, lead opcional"
+    },
+    {
+      "id": "anotar",
+      "lane": "chamada",
+      "col": 2,
+      "type": "tool",
+      "label": "crm_add_lead_note",
+      "sublabel": "lead_id + texto · devolve note_id"
+    },
+    {
+      "id": "handler",
+      "lane": "regra",
+      "col": 3,
+      "type": "lib",
+      "label": "createContactHandler",
+      "sublabel": "o mesmo do POST /api/v1/contacts · porta mcp"
+    },
+    {
+      "id": "porta",
+      "lane": "regra",
+      "col": 3,
+      "type": "lib",
+      "label": "abreConversaAoCriar",
+      "sublabel": "porta mcp não abre conversa nem manda mensagem"
+    },
+    {
+      "id": "linha",
+      "lane": "regra",
+      "col": 3,
+      "type": "lib",
+      "label": "buildLeadActivityRow",
+      "sublabel": "type note · reason é o texto"
+    },
+    {
+      "id": "vincular",
+      "lane": "regra",
+      "col": 4,
+      "type": "lib",
+      "label": "updateLeadHandler",
+      "sublabel": "só se o negócio ainda não tem contato"
+    },
+    {
+      "id": "ficha",
+      "lane": "dados",
+      "col": 4,
+      "type": "table",
+      "label": "contacts",
+      "sublabel": "cargo e empresa em custom_fields"
+    },
+    {
+      "id": "atividade",
+      "lane": "dados",
+      "col": 4,
+      "type": "table",
+      "label": "crm_lead_activities",
+      "sublabel": "type note"
+    },
+    {
+      "id": "lista",
+      "lane": "tela",
+      "col": 5,
+      "type": "frontend",
+      "label": "Ficha do contato",
+      "sublabel": "nome, e-mail, telefone, etiquetas"
+    },
+    {
+      "id": "timeline",
+      "lane": "tela",
+      "col": 5,
+      "type": "frontend",
+      "label": "LeadTimeline",
+      "sublabel": "rótulo Anotação · corpo é o reason"
+    }
+  ],
+  "edges": [
+    { "id": "e1", "from": "token", "to": "criar", "label": "tools/call" },
+    { "id": "e2", "from": "token", "to": "anotar", "label": "tools/call" },
+    { "id": "e3", "from": "criar", "to": "handler", "label": "mesmo cadastro do Salvar" },
+    { "id": "e4", "from": "handler", "to": "porta", "label": "porta mcp" },
+    { "id": "e11", "from": "porta", "to": "ficha", "label": "a ficha nasce sem conversa" },
+    {
+      "id": "e12",
+      "from": "vincular",
+      "to": "atividade",
+      "label": "mudança de contato na timeline"
+    },
+    { "id": "e5", "from": "handler", "to": "ficha", "label": "insert + contact.created" },
+    { "id": "e6", "from": "criar", "to": "vincular", "label": "lead_id sem contato" },
+    { "id": "e7", "from": "ficha", "to": "lista", "label": "a ficha abre na tela" },
+    { "id": "e8", "from": "anotar", "to": "linha", "label": "monta a atividade" },
+    { "id": "e9", "from": "linha", "to": "atividade", "label": "insert + lead.note_added" },
+    { "id": "e10", "from": "atividade", "to": "timeline", "label": "a equipe lê a anotação" }
+  ]
+}

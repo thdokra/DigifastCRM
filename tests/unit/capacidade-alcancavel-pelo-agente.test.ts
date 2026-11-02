@@ -72,6 +72,15 @@ const INALCANCAVEIS_CONHECIDAS: ReadonlyArray<string> = [];
 const ESCRITA_QUE_E_TRABALHO_DE_ATENDENTE: ReadonlyArray<string> = [
   // `app/api/v1/leads/` — POST exige `agent`. Um atendente cria negócio pela tela.
   "crm_create_lead",
+  // `app/api/v1/contacts/` — POST exige `agent`. Cadastrar ficha é o Salvar
+  // da tela de contatos; a ferramenta não abre conversa nem manda mensagem.
+  "crm_create_contact",
+  // Não há rota só de anotação do negócio. O texto entra em
+  // `crm_lead_activities` type `note`, a mesma timeline que `crm_update_lead`
+  // e `crm_move_lead_stage` (as duas exigem `agent`) já escrevem. A nota
+  // interna da conversa (`POST /api/v1/conversations/[id]/notes`) também
+  // exige `agent`. Anotar não apaga e não manda mensagem.
+  "crm_add_lead_note",
   // `app/api/v1/leads/[id]/retomar/` — POST exige `agent` (issue #1538).
   "crm_retomar_lead",
   // `app/api/v1/leads/[id]/` — PATCH exige `agent`.

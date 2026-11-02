@@ -65,11 +65,12 @@ import { logger } from "@/lib/logger";
  *
  * `manual` é a criação de UMA ficha por vez — o `POST /api/v1/contacts` e a
  * prospecção, que cria o contato e sai conversando com ele na mesma rodada.
- * O MCP não passa por aqui: abre conversa por `openSharedContactConversation`,
- * com a sessão escolhida por quem chama. `importacao_csv` é a planilha, que é o
- * único caminho em que "abrir conversa" acontece centenas de vezes de uma vez.
+ * `mcp` é o `crm_create_contact`: cadastra a ficha e para. Abrir conversa e
+ * mandar mensagem continuam sendo o `crm_start_conversation_and_send`, que
+ * escolhe a sessão. `importacao_csv` é a planilha, que é o único caminho em
+ * que "abrir conversa" acontece centenas de vezes de uma vez.
  */
-export type PortaDaCriacao = "manual" | "importacao_csv";
+export type PortaDaCriacao = "manual" | "importacao_csv" | "mcp";
 
 /**
  * A REGRA. Uma linha por porta — mudar o comportamento é mudar aqui, e as duas
@@ -78,6 +79,9 @@ export type PortaDaCriacao = "manual" | "importacao_csv";
 const ABRE_CONVERSA: Readonly<Record<PortaDaCriacao, boolean>> = {
   manual: true,
   importacao_csv: false,
+  // Cadastrar não é convidar para a fila. Quem quiser a primeira mensagem
+  // chama a ferramenta que abre conversa e envia.
+  mcp: false,
 };
 
 /** A regra crua, para quem a precisa sem efeito (e para o teste medir). */

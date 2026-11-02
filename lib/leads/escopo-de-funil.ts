@@ -59,6 +59,11 @@ export type AlvoDeFunil =
 export const ALVO_DE_FUNIL: Record<string, AlvoDeFunil> = {
   // ---- escrevem em crm_leads: o coração do escopo ----
   crm_create_lead: "pipeline_no_argumento",
+  // Cadastra ficha. O funil só entra quando o chamador passa `lead_id` para
+  // ligar o contato a um negócio; sem esse argumento não há card a escopar
+  // (o ramo `funil_vem_do_lead` libera quando o id não vem).
+  crm_create_contact: "funil_vem_do_lead",
+  crm_add_lead_note: "funil_vem_do_lead",
   crm_update_lead: "funil_vem_do_lead",
   crm_move_lead_stage: "funil_vem_do_lead",
   // Encerrar é a escrita de MAIOR dano do inventário e não aparece na frase

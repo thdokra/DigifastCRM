@@ -60,6 +60,9 @@ export const AUDIT_ACTIONS = [
   // pergunta que se faz depois, e ela não se responde contando linhas soltas.
   "lead.imported",
   "contact.created",
+  // Texto livre na linha do tempo do negócio (`crm_add_lead_note`). A atividade
+  // já é a nota; esta linha responde "quem anotou, em qual negócio".
+  "lead.note_added",
   "contact.updated",
   // A varredura que copia o nome salvo na agenda do celular para a ficha.
   // Uma linha por empresa, em cada rodada que preencheu alguém dela — não uma por contato.
